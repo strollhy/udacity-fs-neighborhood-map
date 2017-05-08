@@ -6,19 +6,70 @@ body {
   padding: 0;
 }
 
-.container {
-  height: 100%;
-  position: relative;
-}
-
-input {
-  font-size: 12px;
-}
-
 #map {
-  bottom:0px;
   height: 100%;
-  left: 20%;
-  position: absolute;
+  bottom:0px;
   right: 0px;
+  left: 25%;
+  position: absolute;
+}
+
+.sidebar-nav .navbar-form {
+  border-color: transparent;
+}
+
+@media (max-width: 767px) {
+  #map {
+    height: 80%;
+    bottom:0px;
+    left: 30px;
+    right: 30px;
+    top: 150px;
+    position: absolute;
+  }
+  .sidebar-nav .form-control {
+    width: auto;
+    display: inline-block;
+  }
+  .sidebar-nav .navbar-form {
+    padding: 0px 15px;
+    margin-top: 0px;
+  }
+  .sidebar-nav .navbar-nav {
+    position: absolute;
+    z-index: 5;
+    right: 15px;
+    display: block;
+  }
+  .sidebar-nav .navbar-nav a {
+    background-color: black;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1030px) {
+  .sidebar-nav .form-control {
+    width: 100%;
+  }
+}
+
+/* make sidebar nav vertical */ 
+@media (min-width: 768px) {
+  .sidebar-nav .navbar-nav .navbar-collapse {
+    max-height: none;
+  }
+  .sidebar-nav .navbar-header .navbar-brand {
+    margin-left: auto;
+  }
+  .sidebar-nav .navbar-nav ul {
+    float: none;
+    display: block;
+  }
+  .sidebar-nav .navbar-nav li {
+    float: none;
+    display: block;
+  }
+  .sidebar-nav .navbar-nav li a {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
 }

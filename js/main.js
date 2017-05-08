@@ -1,5 +1,8 @@
+"use strict";
+
 var map;
 var largeInfowindow;
+var bounds;
 
 // Create a new blank array for all the listing markers.
 var locations = [
@@ -21,45 +24,47 @@ function initMap() {
   });
 
   createMarkers(locations);
-  showListings(locations);
 
   // Bind ViewModel
   ko.applyBindings(new MarkersViewModel());
-};
+}
+
+// Error callback for Google Map API request
+function mapError() {
+  alert('Something is wrong with Google Map');
+}
 
 // ViewModel for markers
 function MarkersViewModel() {
   // Data
   this.locations = ko.observable(locations);
-  this.keyword = ko.observable();
+  this.filterText = ko.observable();
 
   // Behaviours
-  this.filterLocation = function() {
-    hideListings();
-
-    var locs = [];
-    var keyword = this.keyword();
-
-    for (var i = 0; i < locations.length; i++) {
-      if (!keyword || locations[i].name.includes(keyword)) {
-        locs.push(locations[i]);
-      }
+  this.filterLocation = ko.computed(() => {
+    if (!this.filterText()) {
+      showListings(locations);
+      return locations;
+    } else {
+      hideListings();
+      var filterd_locations = ko.utils.arrayFilter(locations, (location) => {
+        return location.name.toLowerCase().indexOf(this.filterText().toLowerCase()) !== -1;
+      });
+      showListings(filterd_locations);
+      return filterd_locations;
     }
-
-    showListings(locs);
-    this.locations(locs);
-    return true;
-  };
+  });
 
   this.showLocation = function(location) {
     populateInfoWindow(location.marker, largeInfowindow);
   };
-};
+}
 
 // This function creates markers provided with locations
 function createMarkers(locations) {
   // The following group uses the location array to create an array of markers on initialize.
   largeInfowindow = new google.maps.InfoWindow();
+  bounds = new google.maps.LatLngBounds();
 
   for (var i = 0; i < locations.length; i++) {
     // Get the position from the location array.
@@ -81,8 +86,15 @@ function createMarkers(locations) {
     marker.addListener('click', function() {
       populateInfoWindow(this, largeInfowindow);
     });
+
+    // Display the marker
+    marker.setMap(map);
+
+    // Extend the boundaries of the map for each marker
+    bounds.extend(marker.position);
   }
-};
+  map.fitBounds(bounds);
+}
 
 // This function change markers' animation with a timeout
 function bounceMarker(marker) {
@@ -90,13 +102,16 @@ function bounceMarker(marker) {
   window.setTimeout(function() {
     marker.setAnimation(null);
   }, 1400);
-};
+}
 
 // This function populates the infowindow when the marker is clicked. We'll only allow
 // one infowindow which will open at the marker that is clicked, and populate based
 // on that markers position.
 function populateInfoWindow(marker, infowindow) {
   bounceMarker(marker);
+
+  // Collapse list
+  $('#sidebar-navbar-collapse').collapse('hide');
 
   // Check to make sure the infowindow is not already opened on this marker.
   if (infowindow.marker != marker) {
@@ -106,12 +121,12 @@ function populateInfoWindow(marker, infowindow) {
       success: function(data) {
         renderInfoWindow(marker, infowindow, renderContent(data));
       },
-      error: function(jqXHR, exception) {
+      error: function() {
         renderInfoWindow(marker, infowindow, renderError());
       }
-    })
+    });
   }
-};
+}
 
 function renderInfoWindow(marker, infowindow, content) {
   infowindow.marker = marker;
@@ -121,7 +136,7 @@ function renderInfoWindow(marker, infowindow, content) {
   infowindow.addListener('closeclick', function() {
     infowindow.marker = null;
   });
-};
+}
 
 // Renders content from response, and renders error message when error occurs
 function renderContent(data) {
@@ -132,32 +147,30 @@ function renderContent(data) {
     return '<div>' + content + '</div>';
   } catch(err) {
     return renderError();
-  };
-};
+  }
+}
 
 function renderError() {
   return '<div>' + 'Something is wrong...' + '</div>';
-};
+}
 
 // This function will loop through the markers array and display them all.
 function showListings(locations) {
-  var bounds = new google.maps.LatLngBounds();
   var cnt = 0;
   // Extend the boundaries of the map for each marker and display the marker
   for (var i = 0; i < locations.length; i++) {
     cnt += 1;
-    locations[i].marker.setMap(map);
+    locations[i].marker.setVisible(true);
     bounds.extend(locations[i].marker.position);
-  };
+  }
 
-  if (cnt > 1) {
-    map.fitBounds(bounds);
-  };
-};
+  map.fitBounds(bounds);
+}
 
 // This function will loop through the listings and hide them all.
 function hideListings() {
+  largeInfowindow.close();
   for (var i = 0; i < locations.length; i++) {
-    locations[i].marker.setMap(null);
+    locations[i].marker.setVisible(false);
   }
-};
+}
